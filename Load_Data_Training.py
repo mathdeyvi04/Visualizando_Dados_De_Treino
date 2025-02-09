@@ -46,7 +46,7 @@ def lendo_arquivo(
 
 def organizando_dados(
         dados_tcx: dict
-) -> tuple[str, DataFrame]:
+) -> tuple[dict, DataFrame]:
     """
     Descrição:
         Lerá informações retiradas do gpx e criará um dataframe contendo os
@@ -58,11 +58,9 @@ def organizando_dados(
         "Data": dados_tcx.get("@StartTime").split("T")[0],
         "Calorias Gastas": dados_tcx.get("Calories"),
         "Distância (m)": dados_tcx.get("DistanceMeters"),
-        "Batimento Cardíaco Médio": dados_tcx.get("AverageHeartRateBpm"),
+        "Batimento Cardíaco Médio": dados_tcx.get("AverageHeartRateBpm").get("Value"),
         "Batimento Cardíaco Máximo": dados_tcx.get("MaximumHeartRateBpm"),
-        "Tempo Total (min,seg)": (
-            dados_tcx.get("TotalTimeSeconds") // 60, dados_tcx.get("TotalTimeSeconds") % 60
-        )
+        "Tempo Total (min,seg)": f"{int(dados_tcx.get('TotalTimeSeconds')) // 60}:{int(dados_tcx.get('TotalTimeSeconds')) % 60}"
     }
 
     dados_tcx = dados_tcx[
@@ -71,7 +69,129 @@ def organizando_dados(
         "Trackpoint"
     ]
 
-    pass
+    nomes_correspondentes = {
+        "AltitudeMeters": "Elevação",
+        "Cadence": "Cadência",
+        "HeartRateBpm": "Batimento Cardíaco",
+        "Time": "Instante",
+        "LatitudeDegrees": "Latitude",
+        "LongitudeDegrees": "Longitude",
+        "ns3:Speed": "Velocidade"
+    }
+
+    info = {
+        nome_de_coluna_apropriado: [] for nome_de_coluna_apropriado in nomes_correspondentes.values()
+    }
+
+    for ponto_de_medida in dados_tcx:
+        for chave_do_ponto_de_medida in ponto_de_medida:
+            if chave_do_ponto_de_medida in nomes_correspondentes:
+
+                if chave_do_ponto_de_medida.startswith(
+                        "H"
+                ):
+                    info[
+                        nomes_correspondentes[
+                            chave_do_ponto_de_medida
+                        ]
+                    ].append(
+                        int(
+                            ponto_de_medida[
+                                chave_do_ponto_de_medida
+                            ][
+                                "Value"
+                            ]
+                        )
+                    )
+
+                    continue
+
+                if chave_do_ponto_de_medida.startswith(
+                        "T"
+                ):
+                    info[
+                        nomes_correspondentes[
+                            chave_do_ponto_de_medida
+                        ]
+                    ].append(
+                        ponto_de_medida[
+                            chave_do_ponto_de_medida
+                        ][
+                            11:19
+                        ]
+                    )
+
+                    continue
+
+                info[
+                    nomes_correspondentes[
+                        chave_do_ponto_de_medida
+                    ]
+                ].append(
+                    float(
+                        ponto_de_medida[
+                            chave_do_ponto_de_medida
+                        ]
+                    )
+                )
+
+            else:
+                if chave_do_ponto_de_medida.startswith(
+                        "E"
+                ):
+                    # Então estamos nas extensões
+                    for extensao_disponivel in ponto_de_medida[
+                        chave_do_ponto_de_medida
+                    ][
+                        "ns3:TPX"
+                    ]:
+                        if extensao_disponivel in nomes_correspondentes:
+                            info[
+                                nomes_correspondentes[
+                                    extensao_disponivel
+                                ]
+                            ].append(
+                                float(
+                                    ponto_de_medida[
+                                        chave_do_ponto_de_medida
+                                    ][
+                                        "ns3:TPX"
+                                    ][
+                                        extensao_disponivel
+                                    ]
+                                )
+                            )
+                        else:
+                            print(
+                                f"A extensão {extensao_disponivel} não está cadastradas em nomes_correspondentes"
+                            )
+
+                            if st.runtime.exists():
+                                st.warning(
+                                    f"A extensão {extensao_disponivel} não está cadastradas em nomes_correspondentes"
+                                )
+                else:
+                    # Estamos em Position
+                    for coord in ponto_de_medida[
+                        chave_do_ponto_de_medida
+                    ]:
+                        info[
+                            nomes_correspondentes[
+                                coord
+                            ]
+                        ].append(
+                            float(
+                                ponto_de_medida[
+                                    chave_do_ponto_de_medida
+                                ][
+                                    coord
+                                ]
+                            )
+                        )
+
+    return info_fixas, DataFrame(
+        info
+    )
 
 
 def carregando_arquivo_no_servidor(
@@ -100,18 +220,3 @@ def carregando_arquivo_no_servidor(
         )
 
     return path_arquivo_temporario
-
-
-def tratando_data_do_treino(
-        data: str
-) -> str:
-    """
-    Descrição:
-        Recebe data na forma 20250207 e conserta para 07-02-2025
-    """
-
-    ano = data[:4]
-    mes = data[4:6]
-    dia = data[6:]
-
-    return f"{dia}-{mes}-{ano}"

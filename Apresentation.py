@@ -45,16 +45,31 @@ else:
 if not combbox.startswith(
     "Ca"
 ):
-    data_e_tipo, df = organizando_dados(lendo_arquivo(
+    atividade, dados_brutos = lendo_arquivo(
         combbox
-    ))
+    )
 
-    data, atividade = tratando_data_do_treino(
-        data_e_tipo[:8]
-    ), data_e_tipo[8:]
+    info_fixas, df = organizando_dados(
+        dados_brutos
+    )
 
-    st.title(
-        f"{data} :arrow_forward: {atividade}"
+    st.markdown(
+        """
+        <style>
+        .big-title {
+            font-size: 60px;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            margin-top: 0%;
+        }
+        
+        </style>
+        """ + f"""
+        <div class="big-title">
+            {info_fixas['Data']} | {atividade}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     st.divider()
@@ -68,13 +83,13 @@ if not combbox.startswith(
         latitude="Latitude",
         longitude="Longitude",
         size=1,
-        height=500
+        height=800
     )
 
     st.divider()
 
     apresentar_numeros_principais(
-        df
+        info_fixas
     )
 
 
