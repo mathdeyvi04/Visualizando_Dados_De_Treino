@@ -1,2 +1,3 @@
-# Visualizando_Dados_De_Treino
- 
+# Objetivos
+
+Apresentar de forma aprimorada vários recursos disponíveis dos arquivos exportados pelo zepp
