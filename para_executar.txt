@@ -1,1 +1,1 @@
-streamlit run C:\Users\deyvi\Documents\ImperioPy\CienciaDados\Visualizando_Dados_De_Treino\Visualizar_Data_Training.py
+streamlit run C:\Users\deyvi\Documents\ImperioPy\CienciaDados\Visualizando_Dados_De_Treino\Apresentation.py

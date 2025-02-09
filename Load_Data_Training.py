@@ -1,55 +1,51 @@
-from pandas import DataFrame
+# Código responsável por providenciar ferramentas de carregamento
+from pandas import DataFrame, Series
 import json as js
 import xmltojson as xjs
 from pprint import pprint
 import streamlit as st
+from os import listdir
+import tempfile
+import plotly.express as px
 
 
 def lendo_arquivo(
         nome_arquivo: str
-) -> None | dict:
+) -> None | tuple[dict, str]:
     """
     Descrição:
-        Lerá um determinado arquivo dado, desde que seja .gpx
+        Lerá um determinado arquivo dado, desde que seja .tcx
 
     Retorno:
-        Dicionário contendo informações cruciais.
-        Exemplo:
-            {'name': '20250207 Corrida ao ar livre',
-             'trkseg': {'trkpt': [{'@lat': '-22.94348032',
-                                   '@lon': '-43.15602432',
-                                   'ele': '0.0',
-                                   'extensions': {'ns3:TrackPointExtension': {'ns3:cad': '0.0',
-                                                                              'ns3:hr': '122',
-                                                                              'ns3:speed': '0.5138889'}},
-                                    ...
-                                ]
+        Tupla contendo nome da atividade e dicionário de informações cruciais.
     """
-
-    if not nome_arquivo.endswith(
-            ".gpx"
-    ):
-        return None
 
     with open(
             nome_arquivo,
             "r"
     ) as dados_brutos_de_treino:
-        dados_gpx = js.loads(
+        dados_tcx: dict = js.loads(
             xjs.parse(
                 dados_brutos_de_treino.read()
             )
         )
 
-    return dados_gpx[
-        "gpx"
+    dados_tcx = dados_tcx[
+        "TrainingCenterDatabase"
     ][
-        "trk"
+        "Activities"
+    ][
+        "Activity"
     ]
+
+    return (
+        dados_tcx.get("Notes"),
+        dados_tcx.get("Lap")
+    )
 
 
 def organizando_dados(
-        dados_gpx: dict
+        dados_tcx: dict
 ) -> tuple[str, DataFrame]:
     """
     Descrição:
@@ -57,109 +53,65 @@ def organizando_dados(
         dados de forma mais apropriada.
     """
 
-    data_e_tipo_de_atividade = dados_gpx[
-        "name"
-    ]
-
-    # Limpando e Selecionando Melhor
-    dados_gpx.pop(
-        "name"
-    )
-    dados_gpx = dados_gpx[
-        "trkseg"
-    ][
-        "trkpt"
-    ]
-
-    nomes_apropriados_correspondentes = {
-        "@lat": "Latitude",
-        "@lon": "Longitude",
-        "ele": "Elevação",
-        "time": "Instante",
-        "ns3:cad": "Cadência",
-        "ns3:hr": "Batimento Cardíaco",
-        "ns3:speed": "Velocidade"
-    }
-
-    info = {
-        nome_de_coluna_apropriado: [] for nome_de_coluna_apropriado in nomes_apropriados_correspondentes.values()
-    }
-
-    for ponto_de_medida in dados_gpx:
-        for chave_do_ponto_de_medida in ponto_de_medida:
-            if chave_do_ponto_de_medida in nomes_apropriados_correspondentes:
-                if not chave_do_ponto_de_medida.startswith(
-                    "t"
-                ):
-                    info[
-                        nomes_apropriados_correspondentes[
-                            chave_do_ponto_de_medida
-                        ]
-                    ].append(
-                        ponto_de_medida[
-                            chave_do_ponto_de_medida
-                        ]
-                    )
-                else:
-                    # Então estamos mexendo no tempo
-                    info[
-                        nomes_apropriados_correspondentes[
-                            chave_do_ponto_de_medida
-                        ]
-                    ].append(
-                        # Assim ficamos com o tempo em H:M:S
-                        ponto_de_medida[
-                            chave_do_ponto_de_medida
-                        ].split(
-                            "T"
-                        )[
-                            -1
-                        ][
-                            :-1
-                        ]
-                    )
-
-            else:
-                # Sabemos que estamos nas extensões
-                for extensao_disponivel in ponto_de_medida[
-                    chave_do_ponto_de_medida
-                ][
-                    "ns3:TrackPointExtension"
-                ]:
-                    try:
-                        info[
-                            nomes_apropriados_correspondentes[
-                                extensao_disponivel
-                            ]
-                        ].append(
-                            ponto_de_medida[
-                                chave_do_ponto_de_medida
-                            ][
-                                "ns3:TrackPointExtension"
-                            ][
-                                extensao_disponivel
-                            ]
-                        )
-                    except KeyError:
-                        # Caso tenha uma extensão que não consideramos
-                        print(
-                            f"{extensao_disponivel} não foi cadastrada em nomes_apropriados. Arq: Load_Data_Training / Lin 123."
-                        )
-
-                        # Se está rodando uma aplicação streamlit
-                        if st.runtime.exists():
-                            st.sidebar.warning(
-                                f"{extensao_disponivel} não foi cadastrada em nomes_apropriados. Arq: Load_Data_Training / Lin 123."
-                            )
-
-    return data_e_tipo_de_atividade, DataFrame(
-        info
-    )
-
-print(
-    organizando_dados(
-        lendo_arquivo(
-            "z_1.gpx"
+    info_fixas = {
+        # Coisas que não tínhamos no gpx.
+        "Data": dados_tcx.get("@StartTime").split("T")[0],
+        "Calorias Gastas": dados_tcx.get("Calories"),
+        "Distância (m)": dados_tcx.get("DistanceMeters"),
+        "Batimento Cardíaco Médio": dados_tcx.get("AverageHeartRateBpm"),
+        "Batimento Cardíaco Máximo": dados_tcx.get("MaximumHeartRateBpm"),
+        "Tempo Total (min,seg)": (
+            dados_tcx.get("TotalTimeSeconds") // 60, dados_tcx.get("TotalTimeSeconds") % 60
         )
-    )[1]
-)
+    }
+
+    dados_tcx = dados_tcx[
+        "Track"
+    ][
+        "Trackpoint"
+    ]
+
+    pass
+
+
+def carregando_arquivo_no_servidor(
+        # streamlit.runtime.uploaded_file_manager.UploadedFile
+        arquivo_dado_pelo_usuario
+) -> str:
+    """
+    Descrição:
+        Há uma explicação no local onde essa função é utilizada.
+        Salvamos o arquivo dado pelo usuário no servidor para podermos
+        utilizar como se estivesse em condições.
+
+    Retorno:
+        Caminho do arquivo.
+
+    """
+
+    path_arquivo_temporario = tempfile.mktemp()
+
+    with open(
+            path_arquivo_temporario,
+            "wb"
+    ) as arquivo_temporario_a_ser_preenchido:
+        arquivo_temporario_a_ser_preenchido.write(
+            arquivo_dado_pelo_usuario.read()
+        )
+
+    return path_arquivo_temporario
+
+
+def tratando_data_do_treino(
+        data: str
+) -> str:
+    """
+    Descrição:
+        Recebe data na forma 20250207 e conserta para 07-02-2025
+    """
+
+    ano = data[:4]
+    mes = data[4:6]
+    dia = data[6:]
+
+    return f"{dia}-{mes}-{ano}"
