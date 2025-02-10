@@ -144,3 +144,143 @@ def apresentar_numeros_principais(
             """,
             unsafe_allow_html=True
         )
+
+    st.divider()
+
+
+def apresentar_batimento_cardiaco(
+        df: Series
+) -> None:
+
+    ploty_figure = px.line(
+        data_frame=df,
+        labels={
+            "value": "Batimentos",
+            "index": ""
+        }
+    )
+
+    ploty_figure.update_layout(
+        title={
+            "text": "Batimento Cardíaco",
+            'x': 0.4,
+        },
+        title_font_color='#f02b1d',
+        title_font_size=30
+    )
+
+    ploty_figure.update_traces(
+        line={
+            "color": 'red',
+            "width": 5
+        }
+    )
+
+    st.plotly_chart(
+        ploty_figure
+    )
+
+    st.divider()
+
+
+def apresentar_passe(
+        df: Series
+) -> None:
+    col1, col2 = st.columns(
+        2
+    )
+
+    with col1:
+        st.markdown(
+            """
+            <style>
+            .big-title {
+                font-size: 60px;
+                text-align: center;
+                font-family: 'Roboto', sans-serif;
+                margin-top: 0%;
+            }
+
+            .title_ {
+                font-size: 60px;
+                text-align: center;
+                color: #74e6fc;
+                font-family: 'Roboto', sans-serif;
+                margin-top: 0%;
+            }
+            </style>
+            """ + f"""
+            <div class="big-title">
+                Pace Médio
+            </div>
+
+            <div class="title_">
+                {df.sum() / df.count():.2f}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+        st.markdown(
+            """
+            <style>
+            .big-title {
+                font-size: 60px;
+                text-align: center;
+                font-family: 'Roboto', sans-serif;
+                margin-top: 0%;
+            }
+
+            .title_ {
+                font-size: 60px;
+                text-align: center;
+                color: #74e6fc;
+                font-family: 'Roboto', sans-serif;
+                margin-top: 0%;
+            }
+            </style>
+            """ + f"""
+            <div class="big-title">
+                Melhor Pace
+            </div>
+
+            <div class="title_">
+                {min(df):.2f}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.divider()
+
+    ploty_figure = px.line(
+        data_frame=df,
+        labels={
+            "value": "Valores",
+            "index": ""
+        }
+    )
+
+    ploty_figure.update_layout(
+        title={
+            "text": "Pace",
+            'x': 0.4,
+        },
+        title_font_color='#74e6fc',
+        title_font_size=30,
+        yaxis=dict(autorange="reversed")
+    )
+
+    ploty_figure.update_traces(
+        line={
+            "color": '#74e6fc',
+            "width": 5
+        }
+    )
+
+    st.plotly_chart(
+        ploty_figure
+    )
+
+    st.divider()

@@ -83,7 +83,7 @@ if not combbox.startswith(
         latitude="Latitude",
         longitude="Longitude",
         size=1,
-        height=800
+        height=500
     )
 
     st.divider()
@@ -92,6 +92,13 @@ if not combbox.startswith(
         info_fixas
     )
 
+    apresentar_batimento_cardiaco(
+        df["Batimento Cardíaco"]
+    )
+
+    apresentar_passe(
+        df["Pace"]
+    )
 
 
 

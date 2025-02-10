@@ -76,7 +76,7 @@ def organizando_dados(
         "Time": "Instante",
         "LatitudeDegrees": "Latitude",
         "LongitudeDegrees": "Longitude",
-        "ns3:Speed": "Velocidade"
+        "ns3:Speed": "Pace"
     }
 
     info = {
@@ -151,14 +151,16 @@ def organizando_dados(
                                     extensao_disponivel
                                 ]
                             ].append(
-                                float(
-                                    ponto_de_medida[
-                                        chave_do_ponto_de_medida
-                                    ][
-                                        "ns3:TPX"
-                                    ][
-                                        extensao_disponivel
-                                    ]
+                                50 / (
+                                    3 * float(
+                                        ponto_de_medida[
+                                            chave_do_ponto_de_medida
+                                        ][
+                                            "ns3:TPX"
+                                        ][
+                                            extensao_disponivel
+                                        ]
+                                    )
                                 )
                             )
                         else:
