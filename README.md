@@ -19,6 +19,6 @@ Apresentar de forma aprimorada vários recursos disponíveis dos arquivos export
 
 * Integração de Assistente de Treino
 
-> Infelizmente, devido às restrições limitadas e/ou gratuitas, não foi possível
+> Infelizmente, devido às restrições limitadas e/ou não-gratuitas, não foi possível
 > desenvolver essa feature. Apesar de que poderíamos apenas rodá-lo localmente, 
 > uma balança de decisões foi tomada.
