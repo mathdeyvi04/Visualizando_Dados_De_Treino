@@ -70,7 +70,6 @@ def organizando_dados(
     ]
 
     nomes_correspondentes = {
-        "AltitudeMeters": "Elevação",
         "Cadence": "Cadência",
         "HeartRateBpm": "Batimento Cardíaco",
         "Time": "Instante",
@@ -172,7 +171,10 @@ def organizando_dados(
                                 st.warning(
                                     f"A extensão {extensao_disponivel} não está cadastradas em nomes_correspondentes"
                                 )
-                else:
+
+                elif chave_do_ponto_de_medida.startswith(
+                    "P"
+                ):
                     # Estamos em Position
                     for coord in ponto_de_medida[
                         chave_do_ponto_de_medida
